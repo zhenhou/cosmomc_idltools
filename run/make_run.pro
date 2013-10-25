@@ -134,7 +134,7 @@ pro gen_sh_run, run
 end
 
 
-pro make_run, par_file
+pro make_run, par_file, mid_dir=mid_dir
 
     run = read_par_run(par_file)
 
@@ -170,6 +170,8 @@ pro make_run, par_file
             p = strpos(run.xft_newdat_original, '/', /reverse_search)
             
             tmp_path = '/global/homes/h/hou/Projects/projects/planck_like/xfaster_cosmomc/scripts/data/xfaster_tp/davide_outputs/'
+            if (keyword_set(mid_dir)) then tmp_path = tmp_path+mid_dir
+
             tmp_newdat = strmid(run.xft_newdat_original, p+1, strlen(run.xft_newdat_original))
             tmp_newdat = tmp_path + tmp_newdat
             
@@ -179,6 +181,8 @@ pro make_run, par_file
                 spawn, ['cp',tmp_newdat,run.xft_newdat_original], /noshell
             endif else begin
                 tmp_path = '/global/homes/h/hou/Projects/projects/planck_like/xfaster_cosmomc/scripts/data/xfaster_tp/davide_outputs/'
+                if (keyword_set(mid_dir)) then tmp_path = tmp_path+mid_dir
+
                 tmp_newdat = strmid(run.xft_newdat_original, p+1, strlen(run.xft_newdat_original))
                 tmp_newdat = tmp_path + tmp_newdat
 
