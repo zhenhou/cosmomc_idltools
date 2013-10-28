@@ -66,9 +66,9 @@ pro gen_xft_ini_run, run, num_samples=num_samples
     get_lun, unit
     openw, unit, run.run_ini
     printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/xfaster_newdat_batch1.ini)'
-    if run.use_clik_lowl then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/gen_scripts/batch1_run/lowl.ini)'
-    if run.use_clik_lowlike then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/gen_scripts/batch1_run/lowlike.ini)'
-    if run.use_tauprior then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/gen_scripts/batch1_run/tauprior.ini)'
+    if run.use_clik_lowl then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/lowl.ini)'
+    if run.use_clik_lowlike then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/lowlike.ini)'
+    if run.use_tauprior then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/tauprior.ini)'
     printf, unit, ' '
     printf, unit, '#general settings'
     printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/common_batch1.ini)'
