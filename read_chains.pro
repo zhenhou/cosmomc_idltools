@@ -25,6 +25,9 @@ function read_chains, nchains, num_skip, path, prefix, savfile=savfile
 
             filename = path+'/'+prefix+'_'+cidx+'.txt'
 
+            res = file_info(filename)
+            if (not res.exists) then break
+
             ;filename = path+'/'+prefix+'_'+cidx+'.txt'
             ;print, strcompress(string(ichain),/remove)+'/'+strcompress(string(nchains),/remove)+' starts'
             openr, lun, filename, /get_lun
