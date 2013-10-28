@@ -61,7 +61,7 @@ function read_par_run, par_file
 end
 
 
-pro gen_xft_ini_run, run 
+pro gen_xft_ini_run, run, num_samples=num_samples 
 
     get_lun, unit
     openw, unit, run.run_ini
@@ -73,6 +73,7 @@ pro gen_xft_ini_run, run
     printf, unit, '#general settings'
     printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/common_batch1.ini)'
     printf, unit, ' '
+    if (keyword_set(num_samples)) then printf, unit, 'samples = '+strcompress(string(num_samples),/remove)
     printf, unit, 'cmb_dataset1 = '+run.xft_newdat_run
     printf, unit, 'file_root = '+run.run_chain_output
     printf, unit, ' '
@@ -134,7 +135,7 @@ pro gen_sh_run, run
 end
 
 
-pro make_run, par_file, mid_dir=mid_dir
+pro make_run, par_file, mid_dir=mid_dir, num_samples=num_samples
 
     run = read_par_run(par_file)
 
@@ -194,7 +195,7 @@ pro make_run, par_file, mid_dir=mid_dir
         endif
         
         fix_newdat, run.xft_newdat_original, run.xft_newdat_run, lrange_TT, lrange_EE, lrange_BB, lrange_TE
-        gen_xft_ini_run, run
+        gen_xft_ini_run, run, num_samples=num_samples
 
         ;spawn, 'rm -rf /tmp/xfaster_newdat_original_tmp*'
     endif else if (run_class eq 'mspec') then begin
