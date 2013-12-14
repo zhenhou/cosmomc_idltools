@@ -1,4 +1,4 @@
-pro get_loglikes, path, prefix, loglikes, bestfit_listid, nskip=nskip, mcmc=mcmc
+pro get_loglikes, path, prefix, loglikes, nskip=nskip, mcmc=mcmc
 
     if (keyword_set(nskip)) then num_skip=nskip else num_skip=1000
 
@@ -20,9 +20,6 @@ pro get_loglikes, path, prefix, loglikes, bestfit_listid, nskip=nskip, mcmc=mcmc
 
             ip = iend + 1L
         endfor
-
-        list = reform(mcmc.chain_lists[0,*])
-        minval = min(list,bestfit_listid)
 
         if (not keyword_set(mcmc)) then mcmc = 0
 

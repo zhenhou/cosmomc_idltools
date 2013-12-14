@@ -1,7 +1,7 @@
-pro exe_camb, params, output_root, cls
-
-    camb_path = '/home/hou/Projects/CMBtools/cosmologist.info/camb/'
-    camb = camb_path+'camb'
+pro exe_camb, params, output_root, cls, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k
+    
+    if (not keyword_set(camb_path)) then camb_path = '/home/hou/Projects/CMBtools/cosmologist.info/camb'
+    camb = camb_path+'/camb'
     
     ombh2  = params.Omegabh2
     omch2  = params.Omegach2
@@ -32,12 +32,26 @@ pro exe_camb, params, output_root, cls
 
     nu_massive  = long(neff)
     nu_massless = neff - nu_massive
+
+    if (keyword_set(pivot_k)) then pivk = pivot_k else pivk=0.0500
     
     fmt = '(A,D16.7)'
     ini_file = '/tmp/'+output_root+'.ini'
     get_lun, unit_ini
     openw, unit_ini, ini_file
-    printf, unit_ini, 'DEFAULT('+camb_path+'params.ini)'
+    if (not keyword_set(old_camb)) then begin
+        printf, unit_ini, 'DEFAULT('+camb_path+'/params.ini)'
+    endif else begin
+        a = '  '
+        get_lun, unit_common
+        openr, unit_common, camb_path+'/params_common.ini'
+        while ~eof(unit_common) do begin
+            readf, unit_common, a
+            pos = strpos(a,'#')
+            if pos ne 0 then printf, unit_ini, a
+        endwhile
+        free_lun, unit_common
+    endelse
     printf, unit_ini, 'output_root     = /tmp/'+output_root
     printf, unit_ini, format=fmt, 'ombh2           = ', ombh2
     printf, unit_ini, format=fmt, 'omch2           = ', omch2
@@ -52,7 +66,8 @@ pro exe_camb, params, output_root, cls
     printf, unit_ini, format=fmt, 'scalar_spectral_index(1)  = ', ns
     printf, unit_ini, format=fmt, 're_optical_depth   = ', tau
     printf, unit_ini, ' '
-    printf, unit_ini, format='(A,I6)', 'l_max_scalar      = ', lmax
+    printf, unit_ini, format='(A,I6)',   'l_max_scalar      = ', lmax
+    printf, unit_ini, format='(A,F5.3)', 'pivot_scalar      = ', pivk
     
     ;get_lun, unit_cont
     ;char = 'abcdefg'

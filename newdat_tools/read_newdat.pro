@@ -1,4 +1,4 @@
-function read_newdat, newdat_file, read_window=read_window
+function read_newdat, newdat_file, read_window=read_window, read_covmat=read_covmat
     
     a = ' '
     nbands = lonarr(6)
@@ -15,6 +15,11 @@ function read_newdat, newdat_file, read_window=read_window
     readf, unit, nbands
 
     nlines = max(nbands)
+
+    bid = where(nbands ne 0)
+    nbs = n_elements(bid)
+    last_band = bid[nbs-1]
+    ndim = total(nbands)
 
     num_TT = nbands[0]
     num_EE = nbands[1]
@@ -33,6 +38,21 @@ function read_newdat, newdat_file, read_window=read_window
             readf, unit, tmp_read
             tmp[*,0:nbands[itype]-1,itype] = tmp_read[col_select,*]
         endif
+        
+        
+        ;; be careful at this part for TT-only (or EE-only, etc) case
+        if (keyword_set(read_covmat)) then begin
+            cov = dblarr(ndim, ndim)
+            line_read = dblarr(ndim)
+            if (itype eq last_band) then begin
+                for i=0, nbands[last_band]-1 do readf, unit, a
+                
+                for i=0, ndim-1 do begin
+                    readf, unit, line_read
+                    cov[*,i] = line_read
+                endfor
+            endif
+        endif 
     endwhile
     free_lun, unit
 
@@ -81,6 +101,10 @@ function read_newdat, newdat_file, read_window=read_window
     endif else begin
         data = create_struct(['bands'], ndf)
     endelse
+
+    if (keyword_set(read_covmat)) then begin
+        data = create_struct('covmat', cov, data)
+    endif
 
     tmp = 0
 
