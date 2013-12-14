@@ -1,0 +1,10 @@
+weight          weight
+lnl             lnl
+cosmo.ombh2     omegabh2
+cosmo.omch2     omegach2
+cosmo.theta     theta
+cosmo.tau       tau
+cosmo.ns        ns
+cosmo.logA      logA
+cosmo.Yp        yp
+cosmo.H0        H0
