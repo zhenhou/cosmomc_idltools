@@ -17,7 +17,8 @@ end
 
 
 pro get_sample_info, path, prefix, ith_sample, params_info, cmb_cls, cmbfg_cls, mcmc=mcmc, fg_templates=fg_templates, $
-fg_params=fg_params, fg_types=fg_types, fg_scales=fg_scales, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k
+fg_params=fg_params, fg_types=fg_types, fg_scales=fg_scales, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k, $
+add=add
     
     if (not keyword_set(mcmc)) then begin
         mcmc = read_chains(8, 0, path, prefix)
@@ -29,7 +30,7 @@ fg_params=fg_params, fg_types=fg_types, fg_scales=fg_scales, old_camb=old_camb, 
     params_info = create_struct(['paramnames','params_set'], paramnames, params_set)
     
     ;; now lmax=3300 is default setting in cosmomc_params_cls
-    cmb_cls = cosmomc_params_cls(lmax=lmax, cos_params=params_info, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k)
+    cmb_cls = cosmomc_params_cls(lmax=lmax, cos_params=params_info, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k, add=add)
 
     if (keyword_set(fg_templates)) then begin
         cmbfg_cls = cmb_cls

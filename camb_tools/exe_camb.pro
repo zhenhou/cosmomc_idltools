@@ -1,4 +1,4 @@
-pro exe_camb, params, output_root, cls, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k
+pro exe_camb, params, output_root, cls, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k, add=add
     
     if (not keyword_set(camb_path)) then camb_path = '/home/hou/Projects/CMBtools/cosmologist.info/camb'
     camb = camb_path+'/camb'
@@ -69,31 +69,30 @@ pro exe_camb, params, output_root, cls, old_camb=old_camb, camb_path=camb_path, 
     printf, unit_ini, format='(A,I6)',   'l_max_scalar      = ', lmax
     printf, unit_ini, format='(A,F5.3)', 'pivot_scalar      = ', pivk
     
-    ;get_lun, unit_cont
-    ;char = 'abcdefg'
-    ;openr, unit_cont, 'ini/params_constant.ini'
-    ;while ~ eof(unit_cont) do begin
-    ;    readf, unit_cont, char
-    ;    printf, unit_ini, char
-    ;endwhile
-    ;free_lun, unit_cont
+    if (keyword_set(add)) then begin
+        nadd = n_elements(add)
+        for i=0, nadd-1 do begin
+            printf, unit_ini, add[i]
+        endfor
+    endif
+    
     free_lun, unit_ini
 
     print, "camb starts"
-    print, 'output_root     = '+output_root
-    print, format=fmt, 'ombh2           = ', ombh2
-    print, format=fmt, 'omch2           = ', omch2
-    print, format=fmt, 'omnuh2          = ', omnuh2
-    print, format=fmt, 'omk             = ', omk
-    print, format=fmt, 'hubble          = ', H0
-    print, format=fmt, 'w               = ', w
-    print, format=fmt, 'helium_fraction = ', Yp
-    print, format=fmt, 'massless_neutrinos = ', nu_massless
-    print, format='(A,I6)', 'massive_neutrinos  = ', nu_massive
-    print, 'scalar_amp(1)      = '+strcompress(string(As),/remove)+'E-09'
-    print, format=fmt, 'scalar_spectral_index(1)  = ', ns
-    print, format=fmt, 're_optical_depth   = ', tau
-    print, format='(A,I6)',    'lmax_scalar     = ', lmax
+    ;print, 'output_root     = '+output_root
+    ;print, format=fmt, 'ombh2           = ', ombh2
+    ;print, format=fmt, 'omch2           = ', omch2
+    ;print, format=fmt, 'omnuh2          = ', omnuh2
+    ;print, format=fmt, 'omk             = ', omk
+    ;print, format=fmt, 'hubble          = ', H0
+    ;print, format=fmt, 'w               = ', w
+    ;print, format=fmt, 'helium_fraction = ', Yp
+    ;print, format=fmt, 'massless_neutrinos = ', nu_massless
+    ;print, format='(A,I6)', 'massive_neutrinos  = ', nu_massive
+    ;print, 'scalar_amp(1)      = '+strcompress(string(As),/remove)+'E-09'
+    ;print, format=fmt, 'scalar_spectral_index(1)  = ', ns
+    ;print, format=fmt, 're_optical_depth   = ', tau
+    ;print, format='(A,I6)',    'lmax_scalar     = ', lmax
 
     spawn, [camb, ini_file], /noshell
     print, "camb ends"

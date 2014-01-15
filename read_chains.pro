@@ -1,4 +1,4 @@
-function read_chains, nchains, num_skip, path, prefix, savfile=savfile
+function read_chains, nchains, num_skip, path, prefix, savfile=savfile, single=single
     
     savlog = keyword_set(savfile)
     if (not savlog) then savfile = 'no_one_will_use_this_filename.sav'
@@ -22,8 +22,12 @@ function read_chains, nchains, num_skip, path, prefix, savfile=savfile
         for ichain=1, nchains do begin
             ct_single = 0L
             cidx = strcompress(string(ichain),/remove)
-
-            filename = path+'/'+prefix+'_'+cidx+'.txt'
+            
+            if (nchains eq 1 and keyword_set(single)) then begin
+                filename = path+'/'+prefix+'.txt'
+            endif else begin
+                filename = path+'/'+prefix+'_'+cidx+'.txt'
+            endelse
 
             res = file_info(filename)
             if (not res.exists) then break
@@ -67,7 +71,7 @@ function read_chains, nchains, num_skip, path, prefix, savfile=savfile
         like_cache = 0
         param_cache = 0
         
-        mcmc = create_struct('nparams',nparams, 'nsteps',ct, 'chain_lists',params_list, 'weight',weight, 'paramnames',['logL',name1])
+        mcmc = create_struct('nparams',nparams, 'nsamples',ct, 'chain_lists',params_list, 'weight',weight, 'paramnames',['logL',name1])
         if (savlog and (not savinfo.exists)) then save, mcmc, filename=savfile
     endelse
     return, mcmc 

@@ -36,7 +36,7 @@ pro get_params, cmb_params=cmb_params, cos_params=cos_params
     return
 end
 
-function cosmomc_params_cls, lmax=lmax, cos_params=cos_params, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k
+function cosmomc_params_cls, lmax=lmax, cos_params=cos_params, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k, add=add
     
     lmax = 3300
     cmb_params = create_struct('lmax',lmax, 'Omegabh2',0.0d0, 'Omegach2',0.0d0, 'Omeganuh2',0.0d0, $
@@ -50,7 +50,7 @@ function cosmomc_params_cls, lmax=lmax, cos_params=cos_params, old_camb=old_camb
 
     output_root = 'idlcamb_'+strcompress(string(rand),/remove)
 
-    exe_camb, cmb_params, output_root, cls, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k
+    exe_camb, cmb_params, output_root, cls, old_camb=old_camb, camb_path=camb_path, pivot_k=pivot_k, add=add
     
     return, cls
 end
