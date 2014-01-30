@@ -25,7 +25,7 @@ add=add
     endif
 
     paramnames = mcmc.paramnames
-    params_set = mcmc.chain_lists[*,ith_sample-1]
+    params_set = mcmc.chain_lists[*,ith_sample]
 
     params_info = create_struct(['paramnames','params_set'], paramnames, params_set)
     

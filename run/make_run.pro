@@ -1,4 +1,4 @@
-function read_par_run, par_file
+function read_par_run, par_file, add=add
     
     readcol, par_file, keys, tmp, var, format='(A,A,A)', comment='#', stringskip='[', /silent
     
@@ -10,7 +10,6 @@ function read_par_run, par_file
                         'xft_lmax_BB', 0, $
                         'xft_lmin_TE', 0, $
                         'xft_lmax_TE', 0, $
-                        'xft_EE_template', 0, $
                         'xft_newdat_original', 'test_original.newdat', $
                         'xft_newdat_run', 'test.newdat', $
                         'use_xfaster', 0, $
@@ -54,55 +53,88 @@ function read_par_run, par_file
         endelse
         
         if is_num then run.(itag) = long(var[ikey]) else run.(itag) = strcompress(var[ikey],/remove)
-
     endfor
+    
+    if (keyword_set(add)) then begin
+        add = ['#additional settings']
+
+        a = ' '
+        is_add = 0
+        get_lun, unit
+        openr, unit, par_file
+        while ~eof(unit) do begin
+            readf, unit, a
+            if (strmid(a,0,4) eq '#add') then begin
+                is_add = 1
+                break
+            endif
+        endwhile
+        
+        if (is_add) then begin
+            while ~eof(unit) do begin
+                readf, unit, a
+                add = [add, a]
+            endwhile
+        endif
+
+
+        free_lun, unit
+    endif
     
     return, run    
 end
 
 
-pro gen_xft_ini_run, run, num_samples=num_samples 
+pro gen_xft_ini_run, run, add=add 
 
     get_lun, unit
     openw, unit, run.run_ini
-    printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/xfaster_newdat_batch1.ini)'
-    if run.use_clik_lowl then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/lowl.ini)'
-    if run.use_clik_lowlike then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/lowlike.ini)'
-    if run.use_tauprior then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/tauprior.ini)'
+    printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1/xfaster_newdat_example.ini)'
+    if run.use_clik_lowl then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1/lowl.ini)'
+    if run.use_clik_lowlike then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1/lowlike.ini)'
+    if run.use_tauprior then printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1/tauprior.ini)'
+    printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1/nCIB_prior.ini)'
     printf, unit, ' '
     printf, unit, '#general settings'
-    printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1_run/common_batch1.ini)'
+    printf, unit, 'DEFAULT('+run.run_cosmomc_home+'/batch1/common_batch1_nersc.ini)'
     printf, unit, ' '
-    if (keyword_set(num_samples)) then printf, unit, 'samples = '+strcompress(string(num_samples),/remove)
+    printf, unit, 'cmb_numdatasets = 1'
     printf, unit, 'cmb_dataset1 = '+run.xft_newdat_run
     printf, unit, 'file_root = '+run.run_chain_output
     printf, unit, ' '
     printf, unit, '#high for new runs'
     printf, unit, 'MPI_Max_R_ProposeUpdate = 30'
     printf, unit, ' '
-    ;printf, unit, 'propose_matrix = '+run.run_cosmomc_home+'/planck_covmats/base_planck_lowl_lowLike.covmat'
-    printf, unit, 'propose_matrix = planck_covmats/base_planck_lowl_lowLike.covmat'
-    printf, unit, ' '
     printf, unit, 'start_at_bestfit = F'
-    printf, unit, 'feedback = 2'
-    printf, unit, 'use_fast_slow = F'
-    printf, unit, 'sampling_method = 1'
-    printf, unit, 'indep_sample = 0'
     printf, unit, ' '
 
-    if ((not run.xft_EE_template) or (run.xft_lmax_EE eq 0)) then begin
-        printf, unit, '# turn off the l(l+1) template fitting for EE'
-        printf, unit, 'has_ell2_EE1 = F'
-        printf, unit, 'param[aee] =  0 0 0 0 0'
+    if (run.xft_lmax_EE eq 0) then begin
+        printf, unit, '# turn off extra-Galactic (Poisson) foreground for EE'
+        printf, unit, 'param[apsEE] =  0 0 0 0 0'
+        printf, unit, ' '
+    endif
+
+    if (run.xft_lmax_TE eq 0) then begin
+        printf, unit, '# turn off extra-Galactic (Poisson) foreground for TE'
+        printf, unit, 'param[apsTE] =  0 0 0 0 0'
         printf, unit, ' '
     endif
 
     if (run.xft_lmax_TT eq 0) then begin
         printf, unit, '# turn off the egfg for TT'
-        printf, unit, 'param[asz] = 0 0 0 0 0'
-        printf, unit, 'param[aps] = 0 0 0 0 0'
-        printf, unit, 'param[acl] = 0 0 0 0 0'
+        printf, unit, 'param[atsz] = 0 0 0 0 0'
+        printf, unit, 'param[aksz] = 0 0 0 0 0'
+        printf, unit, 'param[apsTT] = 0 0 0 0 0'
+        printf, unit, 'param[acib] = 0 0 0 0 0'
+        printf, unit, 'param[nCIB]  = 0.8 0.8 0.8 0 0'
         printf, unit, ' '
+    endif
+
+    if (keyword_set(add)) then begin
+        nadd = n_elements(add)
+        for i=0, nadd-1 do begin
+            printf, unit, add[i]
+        endfor
     endif
 
     free_lun, unit
@@ -110,33 +142,46 @@ pro gen_xft_ini_run, run, num_samples=num_samples
 end
 
 
-pro gen_sh_run, run
+pro gen_sh_run, run, bundle=bundle
     
     get_lun, unit
-    openw, unit, run.run_sh
-    printf, unit, '#!/bin/sh'
-    printf, unit, '#PBS -q usplanck'
-    printf, unit, '#PBS -l nodes='+strcompress(string(run.run_num_nodes),/remove)+ $
-                  ':ppn='+strcompress(string(run.run_num_ppn),/remove)
-    printf, unit, '#PBS -l pvmem=20GB'
-    printf, unit, '#PBS -l walltime='+strcompress(string(run.run_hours),/remove)+':00:00'
-    printf, unit, '#PBS -N '+run.run_name
-    printf, unit, '#PBS -e $PBS_JOBID.err'
-    printf, unit, '#PBS -o $PBS_JOBID.out'
-    printf, unit, '#PBS -m bea'
-    printf, unit, ' '
-    printf, unit, 'cd $PBS_O_WORKDIR'
-    printf, unit, 'export OMP_NUM_THREADS=8'
-    printf, unit, ' '
+
+    res = file_info(run.run_sh)
+    if (res.exists and keyword_set(bundle)) then begin
+        a = ' '
+        openu, unit, run.run_sh
+        while ~eof(unit) do begin
+            readf, unit, a
+        endwhile
+    endif else begin
+        openw, unit, run.run_sh
+        printf, unit, '#!/bin/sh'
+        printf, unit, '#PBS -q usplanck'
+        printf, unit, '#PBS -l nodes='+strcompress(string(run.run_num_nodes),/remove)+ $
+                      ':ppn='+strcompress(string(run.run_num_ppn),/remove)
+        printf, unit, '#PBS -l pvmem=20GB'
+        printf, unit, '#PBS -l walltime='+strcompress(string(run.run_hours),/remove)+':00:00'
+        printf, unit, '#PBS -N '+run.run_name
+        printf, unit, '#PBS -e $PBS_JOBID.err'
+        printf, unit, '#PBS -o $PBS_JOBID.out'
+        printf, unit, '#PBS -m bea'
+        printf, unit, ' '
+        printf, unit, 'module load intel'
+        printf, unit, 'module load openmpi-intel'
+        printf, unit, ' '
+        printf, unit, 'cd $PBS_O_WORKDIR'
+        printf, unit, 'export OMP_NUM_THREADS=8'
+        printf, unit, ' '
+    endelse
     printf, unit, 'mpirun -np '+strcompress(string(run.run_num_nodes),/remove)+' -bynode '+run.run_cosmomc_home+'/cosmomc '+run.run_ini
     printf, unit, ' '
-
     free_lun, unit
 end
 
 
-pro make_run, par_file, mid_dir=mid_dir, num_samples=num_samples
+pro make_run, par_file, add=add, ndf_original_path=ndf_original_path, sh_bundle=sh_bundle
 
+    ;run = read_par_run(par_file, add=add)
     run = read_par_run(par_file)
 
     run.xft_lmin_TT = min([run.xft_lmin_TT, run.xft_lmax_TT])
@@ -169,9 +214,12 @@ pro make_run, par_file, mid_dir=mid_dir, num_samples=num_samples
         if (not info.exists) then begin
             
             p = strpos(run.xft_newdat_original, '/', /reverse_search)
-            
-            tmp_path = '/global/homes/h/hou/Projects/projects/planck_like/xfaster_cosmomc/scripts/data/xfaster_tp/davide_outputs/'
-            if (keyword_set(mid_dir)) then tmp_path = tmp_path+mid_dir
+
+            if (keyword_set(ndf_original_path)) then begin
+                tmp_path = ndf_original_path
+            endif else begin
+                tmp_path = '/global/homes/h/hou/Projects/projects/planck_like/xfaster_cosmomc/scripts/data/xfaster_tp/davide_outputs/'
+            endelse
 
             tmp_newdat = strmid(run.xft_newdat_original, p+1, strlen(run.xft_newdat_original))
             tmp_newdat = tmp_path + tmp_newdat
@@ -181,8 +229,11 @@ pro make_run, par_file, mid_dir=mid_dir, num_samples=num_samples
             if tmp_info.exists then begin
                 spawn, ['cp',tmp_newdat,run.xft_newdat_original], /noshell
             endif else begin
-                tmp_path = '/global/homes/h/hou/Projects/projects/planck_like/xfaster_cosmomc/scripts/data/xfaster_tp/davide_outputs/'
-                if (keyword_set(mid_dir)) then tmp_path = tmp_path+mid_dir
+                if (keyword_set(ndf_original_path)) then begin
+                    tmp_path = ndf_original_path
+                endif else begin
+                    tmp_path = '/global/homes/h/hou/Projects/projects/planck_like/xfaster_cosmomc/scripts/data/xfaster_tp/davide_outputs/'
+                endelse
 
                 tmp_newdat = strmid(run.xft_newdat_original, p+1, strlen(run.xft_newdat_original))
                 tmp_newdat = tmp_path + tmp_newdat
@@ -195,7 +246,7 @@ pro make_run, par_file, mid_dir=mid_dir, num_samples=num_samples
         endif
         
         fix_newdat, run.xft_newdat_original, run.xft_newdat_run, lrange_TT, lrange_EE, lrange_BB, lrange_TE
-        gen_xft_ini_run, run, num_samples=num_samples
+        gen_xft_ini_run, run, add=add
 
         ;spawn, 'rm -rf /tmp/xfaster_newdat_original_tmp*'
     endif else if (run_class eq 'mspec') then begin
@@ -203,6 +254,6 @@ pro make_run, par_file, mid_dir=mid_dir, num_samples=num_samples
         stop
     endif
 
-    gen_sh_run, run
+    gen_sh_run, run, bundle=sh_bundle
 
 end

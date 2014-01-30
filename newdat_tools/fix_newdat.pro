@@ -1,4 +1,5 @@
-function preload_newdat, file_in
+function preload_newdat, file_in, has_pol=has_pol
+
     types = ['TT','EE','BB','EB','TE','TB']
     
     a = '  ' 
@@ -22,6 +23,8 @@ function preload_newdat, file_in
         nbands[4] = tmp
     endif
     ;;-------------------
+    has_pol = 1
+    if (total(nbands) eq nbands[0]) then has_pol=0
 
     nlines = max(nbands)
     tmp = dblarr(5, nlines, 6)
@@ -50,12 +53,14 @@ function preload_newdat, file_in
 end
 
 pro fix_newdat, file_in, file_out, lrange_TT, lrange_EE, lrange_BB, lrange_TE
-
-    ndf = preload_newdat(file_in)
+    
+    has_pol = 1
+    ndf = preload_newdat(file_in, has_pol=has_pol)
     
     bmin_TT = (where(ndf.bands.TT[3,*] ge lrange_TT[0]))[0]+1
     bmax_TT = (where(ndf.bands.TT[4,*] ge lrange_TT[1]))[0]+1
-
+    
+    if (has_pol) then begin
     bmin_EE = (where(ndf.bands.EE[3,*] ge lrange_EE[0]))[0]+1
     bmax_EE = (where(ndf.bands.EE[4,*] ge lrange_EE[1]))[0]+1
 
@@ -64,6 +69,7 @@ pro fix_newdat, file_in, file_out, lrange_TT, lrange_EE, lrange_BB, lrange_TE
 
     bmin_TE = (where(ndf.bands.TE[3,*] ge lrange_TE[0]))[0]+1
     bmax_TE = (where(ndf.bands.TE[4,*] ge lrange_TE[1]))[0]+1
+    endif
 
     ;if (lrange_TT[0] eq 0) then bmin_TT = 0
     if (lrange_TT[1] eq 0) then begin
@@ -95,11 +101,25 @@ pro fix_newdat, file_in, file_out, lrange_TT, lrange_EE, lrange_BB, lrange_TE
     a = ' '
 
     openr, unit_in, file_in
+    readf, unit_in, a
+    readf, unit_in, a
+    b = strcompress(a, /remove)
+    if (strcmp(strmid(b,0,1),'#') eq 1) then begin
+        readf, unit_in, a
+    endif
+
+    res = strsplit(a, ' ', /extract)
+    nbands = long(res)
+    num_bands = total(nbands,/integer)
+    free_lun, unit_in
+
+    get_lun, unit_in
+    openr, unit_in, file_in
     openw, unit_out, file_out
     
     ;;-------------
     readf, unit_in, a
-    printf, unit_out, 'windows_tophat/window_'
+    printf, unit_out, 'windows_tophat_'+strcompress(string(num_bands),/remove)+'/window_'
     
     ;;-------------
     readf, unit_in, a
