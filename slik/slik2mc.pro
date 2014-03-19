@@ -1,5 +1,6 @@
 pro make_order, a, slik_names, mc_names, params, params_id_slik
-    str = strsplit(a, /extract, escape='#')
+    str = strsplit(a, ' ', /extract, escape='#')
+    str = strcompress(string(str) ,/remove)
     
     nparams = n_elements(str)
     ncosmos = n_elements(slik_names)
@@ -21,12 +22,12 @@ pro make_order, a, slik_names, mc_names, params, params_id_slik
             i_egfs += 1
         endif
     endfor
-
+    
 end
 
-pro slik2mc, sliktxt, output_root
+pro slik2mc, sliktxt, output_root, num_split=num_split
     
-    cosmo_paramnames = '~/Projects/CMBtools/Healpix_3.11/src/idl/cosmomc_idltools/slik/cosmo.paramnames'
+    cosmo_paramnames = '~/Projects/CMBtools/Healpix_3.11/src/idl/cosmomc_tools/slik/cosmo.paramnames'
     readcol, cosmo_paramnames, slik_names, mc_names, format='(A,A)', /silent
     
     a = ' '
@@ -67,13 +68,27 @@ pro slik2mc, sliktxt, output_root
         endif
         lists_new[i,*] = lists[params_id_slik[i],*]*scale + add
     endfor
-    
-    get_lun, unit
-    openw, unit, output_root+'_1.txt'
-    for i=0L, ct-1L do begin
-        printf, unit, format='(200E16.7)', lists_new[*,i]
-    endfor
-    free_lun, unit
+
+    if (keyword_set(num_split)) then begin
+        for i_split=1, num_split do begin
+            istart = (i_split-1) * long(ct/num_split)
+            iend = istart + long(ct/num_split) - 1
+            cidx = strcompress(string(i_split),/remove)
+            get_lun, unit
+            openw, unit, output_root+'_'+cidx+'.txt'
+            for i=istart, iend do begin
+                printf, unit, format='(200E16.7)', lists_new[*,i]
+            endfor
+            free_lun, unit
+        endfor
+    endif else begin
+        get_lun, unit
+        openw, unit, output_root+'_1.txt'
+        for i=0L, ct-1L do begin
+            printf, unit, format='(200E16.7)', lists_new[*,i]
+        endfor
+        free_lun, unit
+    endelse
 
     get_lun, unit
     openw, unit, output_root+'.paramnames'
